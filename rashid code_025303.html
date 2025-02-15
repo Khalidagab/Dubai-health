@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>مستشفى راشد - الملاحة الداخلية</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
+    <script>
+      var map;
+      var markers = {}; // لتخزين الـ Markers للقسم المختلفة
+      var directionsService;
+      var directionsRenderer;
+  <h2>خريطة مستشفى راشد</h2>
+    
+    <div class="map-container">
+        <img id="mapImage" src="rashid_layout.png" alt="خريطة مستشفى راشد">
+    </div>
+
+      function initMap() {
+        // تحديد مركز الخريطة
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 25.276987, lng: 55.296249}, // إحداثيات مركز المستشفى
+          zoom: 16
+        });
+
+        // إعداد خدمة الاتجاهات والـ renderer
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer();
+        directionsRenderer.setMap(map);
+
+        // إضافة Marker للعيادات الخارجية
+        var clinicMarker = new google.maps.Marker({
+          position: {lat: 25.2450647, lng: 55.3174747}, // إحداثيات العيادات الخارجية
+          map: map,
+          title: 'العيادات الخارجية'
+        });
+        markers['العيادات الخارجية'] = clinicMarker;
+
+        // إضافة Marker لقسم الطوارئ
+        var emergencyMarker = new google.maps.Marker({
+          position: {lat: 25.2443251, lng: 55.3183924}, // إحداثيات قسم الطوارئ
+          map: map,
+          title: 'قسم الطوارئ'
+        });
+        markers['قسم الطوارئ'] = emergencyMarker;
+
+        // إضافة Marker لقسم الأشعة
+        var radiologyMarker = new google.maps.Marker({
+          position: {lat: 25.2441407, lng: 55.3197378}, // إحداثيات قسم الأشعة
+          map: map,
+          title: 'قسم الأشعة'
+        });
+        markers['قسم الأشعة'] = radiologyMarker;
+
+        // إضافة Marker لقسم الإصابات والكسور
+        var fracturesMarker = new google.maps.Marker({
+          position: {lat: 25.2438863, lng: 55.3199983}, // إحداثيات قسم الإصابات والكسور
+          map: map,
+          title: 'قسم الإصابات والكسور'
+        });
+        markers['قسم الإصابات والكسور'] = fracturesMarker;
+
+        // إضافة نافذة معلومات لكل Marker
+        var infoWindows = {};
+        infoWindows['العيادات الخارجية'] = new google.maps.InfoWindow({
+          content: '<h3>العيادات الخارجية</h3><p>تجد جميع العيادات الخاصة بالمراجعين هنا.</p>'
+        });
+        infoWindows['قسم الطوارئ'] = new google.maps.InfoWindow({
+          content: '<h3>قسم الطوارئ</h3><p>قسم الطوارئ يختص بالحالات الطارئة.</p>'
+        });
+        infoWindows['قسم الأشعة'] = new google.maps.InfoWindow({
+          content: '<h3>قسم الأشعة</h3><p>قسم الأشعة يشمل جميع الفحوصات الإشعاعية.</p>'
+        });
+        infoWindows['قسم الإصابات والكسور'] = new google.maps.InfoWindow({
+          content: '<h3>قسم الإصابات والكسور</h3><p>يتم التعامل مع الإصابات والكسور في هذا القسم.</p>'
+        });
+
+        // إضافة الحدث للنقر على كل Marker لعرض نافذة المعلومات
+        clinicMarker.addListener('click', function() {
+          infoWindows['العيادات الخارجية'].open(map, clinicMarker);
+        });
+
+        emergencyMarker.addListener('click', function() {
+          infoWindows['قسم الطوارئ'].open(map, emergencyMarker);
+        });
+
+        radiologyMarker.addListener('click', function() {
+          infoWindows['قسم الأشعة'].open(map, radiologyMarker);
+        });
+
+        fracturesMarker.addListener('click', function() {
+          infoWindows['قسم الإصابات والكسور'].open(map, fracturesMarker);
+        });
+      }
+
+      // وظيفة البحث عن القسم
+      function searchSection() {
+        var sectionName = document.getElementById('searchInput').value.trim();
+        
+        // إذا كان القسم موجود في الـ Markers
+        if (markers[sectionName]) {
+          map.setCenter(markers[sectionName].getPosition()); // تكبير الخريطة على القسم المحدد
+          map.setZoom(18); // تكبير الخريطة
+          google.maps.event.trigger(markers[sectionName], 'click'); // فتح نافذة المعلومات
+        } else {
+          alert('القسم غير موجود، حاول مرة أخرى');
+        }
+      }
+
+      // وظيفة الملاحة إلى القسم المحدد
+      function navigateToSection(sectionName) {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+            var destination = markers[sectionName].getPosition();
+
+            var request = {
+              origin: userLocation,
+              destination: destination,
+              travelMode: google.maps.TravelMode.WALKING // يمكن تغييرها إلى DRIVING أو BICYCLING حسب الحاجة
+            };
+
+            directionsService.route(request, function(result, status) {
+              if (status == 'OK') {
+                directionsRenderer.setDirections(result);
+              } else {
+                alert('لم يتم العثور على الاتجاهات: ' + status);
+              }
+            });
+          });
+        } else {
+          alert('موقعك غير متاح');
+        }
+      }
+    </script>
+  </head>
+  <body onload="initMap()">
+    <h3>مستشفى راشد - الملاحة الداخلية</h3>
+
+    <!-- واجهة البحث -->
+    <div>
+      <input type="text" id="searchInput" placeholder="ابحث عن قسم...">
+      <button onclick="searchSection()">بحث</button>
+    </div>
+
+    <!-- زر الملاحة -->
+    <div>
+      <button onclick="navigateToSection('العيادات الخارجية')">الملاحة إلى العيادات الخارجية</button>
+      <button onclick="navigateToSection('قسم الطوارئ')">الملاحة إلى قسم الطوارئ</button>
+      <button onclick="navigateToSection('قسم الأشعة')">الملاحة إلى قسم الأشعة</button>
+      <button onclick="navigateToSection('قسم الإصابات والكسور')">الملاحة إلى قسم الإصابات والكسور</button>
+    </div>
+
+    <!-- خريطة المستشفى -->
+    <div id="map" style="height: 500px; width: 100%;"></div>
+  </body>
+</html>
